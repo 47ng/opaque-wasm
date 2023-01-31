@@ -1,16 +1,15 @@
 use crate::hash_methods::Default;
-use wasm_bindgen::prelude::*;
 use rand::rngs::OsRng;
+use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
 #[derive(Clone, PartialEq, Debug)]
 pub struct ServerSetup {
-    internal: opaque_ke::ServerSetup<Default>
+    internal: opaque_ke::ServerSetup<Default>,
 }
 
 #[wasm_bindgen]
 impl ServerSetup {
-
     #[wasm_bindgen(constructor)]
     pub fn new() -> ServerSetup {
         let mut rng = OsRng;
@@ -24,15 +23,11 @@ impl ServerSetup {
     }
 
     pub fn deserialize(input: Vec<u8>) -> Result<ServerSetup, JsValue> {
-        let internal  = match opaque_ke::ServerSetup::deserialize(&input) {
+        let internal = match opaque_ke::ServerSetup::deserialize(&input) {
             Ok(val) => val,
-            Err(_) => return Err("Failed to load serialized ServerSetup".into())
+            Err(_) => return Err("Failed to load serialized ServerSetup".into()),
         };
-        Ok(
-            ServerSetup {
-                internal
-            }
-        )
+        Ok(ServerSetup { internal })
     }
 
     pub(crate) fn internal<'a>(&'a self) -> &'a opaque_ke::ServerSetup<Default> {
@@ -50,6 +45,7 @@ mod tests {
     fn server_setup_serde() {
         let setup1 = ServerSetup::new();
         let serialized = setup1.serialize();
+        assert_eq!(serialized.len(), 128);
         let setup2 = ServerSetup::deserialize(serialized).unwrap();
         assert_eq!(setup1, setup2);
     }

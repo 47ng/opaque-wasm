@@ -48,18 +48,23 @@ mod tests {
         let [password_file, registration_export_key] = {
             let mut client_registration = Registration::new();
             let registration_request = client_registration.start(&password).unwrap();
+            assert_eq!(registration_request.len(), 32);
             let server_registration = HandleRegistration::new(&server_setup);
             let registration_response = server_registration
                 .start(username.into(), registration_request)
                 .unwrap();
+            assert_eq!(registration_response.len(), 64);
             let registration_record = client_registration
                 .finish(&password, registration_response.clone())
                 .unwrap();
+            assert_eq!(registration_record.len(), 192);
             let password_file = server_registration
                 .finish(registration_record.clone())
                 .unwrap();
+            assert_eq!(password_file.len(), 192);
             assert_eq!(password_file, registration_record);
             let export_key = client_registration.get_export_key().unwrap();
+            assert_eq!(export_key.len(), 64);
             assert_ne!(export_key, registration_response);
             [password_file, export_key]
         };
@@ -68,18 +73,24 @@ mod tests {
         let login_export_key = {
             let mut client_login = Login::new();
             let login_request = client_login.start(&password).unwrap();
+            assert_eq!(login_request.len(), 96);
 
             // Client -> Server - First request handler
             let mut server_login1 = HandleLogin::new(&server_setup);
             let login_response = server_login1
                 .start(Some(password_file), username.into(), login_request)
                 .unwrap();
+            assert_eq!(login_response.len(), 320);
             let serialized_state = server_login1.serialize().unwrap();
+            assert_eq!(serialized_state.len(), 192);
             // Client <- Server - end of first request handler
 
             let login_record = client_login.finish(&password, login_response).unwrap();
+            assert_eq!(login_record.len(), 64);
             let export_key = client_login.get_export_key().unwrap();
             let client_session_key = client_login.get_session_key().unwrap();
+            assert_eq!(export_key.len(), 64);
+            assert_eq!(client_session_key.len(), 64);
             assert_ne!(export_key, client_session_key);
 
             // Client -> Server - Second request handler
